@@ -34,15 +34,16 @@ local Window = Rayfield:CreateWindow({
 })
 local Tab = Window:CreateTab("Main", 4483362458) -- Title, Image
 local Section = Tab:CreateSection("Main || Auto Farm")
+
 -- ตัวแปรที่จะเก็บขนาด Hitbox ที่ปรับผ่าน Slider
-local hitboxSize = 10  -- เริ่มต้นขนาดของ hitbox
+local hitboxSize = 50  -- ขนาดเริ่มต้นของ hitbox ที่ใหญ่ขึ้น
 
 -- สร้าง Slider เพื่อปรับขนาด hitbox
 local Slider = Tab:CreateSlider({
     Name = "Hitbox Size",
-    Range = {0, 50},  -- ตั้งค่าช่วงของขนาด hitbox
-    Increment = 1,    -- การเพิ่มขึ้นของขนาดที่ปรับได้
-    Suffix = "Studs", -- เพิ่มคำอธิบายหน่วยเป็น 'Studs'
+    Range = {0, 100},  -- ตั้งค่าช่วงของขนาด hitbox (เพิ่มขนาดขึ้น)
+    Increment = 1,     -- การเพิ่มขึ้นของขนาดที่ปรับได้
+    Suffix = "Studs",  -- เพิ่มคำอธิบายหน่วยเป็น 'Studs'
     CurrentValue = hitboxSize, -- ค่าเริ่มต้น
     Flag = "HitboxSlider",  -- ใช้ Flag เพื่อใช้ในการตั้งค่า
     Callback = function(Value)
@@ -52,43 +53,55 @@ local Slider = Tab:CreateSlider({
     end,
 })
 
+-- ตัวแปรเพื่อเก็บ hitbox และสถานะการซ่อน
+local currentHitbox = nil
+local isHitboxVisible = true  -- เริ่มต้นให้แสดง hitbox
+
 -- สร้าง Button เพื่อเปิดใช้งาน Hitbox
 local Button = Tab:CreateButton({
     Name = "Activate Hitbox",
     Callback = function()
         -- ฟังก์ชันนี้จะถูกเรียกเมื่อกดปุ่ม
-        -- เพิ่ม hitbox ขึ้นที่ตัวละครหรือส่วนอื่นๆ
         local character = game.Players.LocalPlayer.Character
         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
         
         -- ลบ hitbox เก่าออกหากมี
-        for _, part in ipairs(character:GetChildren()) do
-            if part.Name == "Hitbox" then
-                part:Destroy()
-            end
+        if currentHitbox then
+            currentHitbox:Destroy()
         end
 
-        -- สร้าง hitbox ใหม่ (เปลี่ยนจาก Ball เป็น Block)
-        local hitbox = Instance.new("Part")
-        hitbox.Name = "Hitbox"
-        hitbox.Shape = Enum.PartType.Block  -- เปลี่ยนเป็นสี่เหลี่ยม
-        hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)  -- ขนาดตามค่าที่ได้จาก Slider
-        hitbox.Position = humanoidRootPart.Position
-        hitbox.Anchored = false
-        hitbox.CanCollide = false
-        hitbox.Parent = character
+        -- สร้าง hitbox ใหม่ (ทำให้ขนาดใหญ่มากขึ้น)
+        currentHitbox = Instance.new("Part")
+        currentHitbox.Name = "Hitbox"
+        currentHitbox.Shape = Enum.PartType.Block  -- เปลี่ยนเป็นสี่เหลี่ยม
+        currentHitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)  -- ขนาดตามค่าที่ได้จาก Slider
+        currentHitbox.Position = humanoidRootPart.Position
+        currentHitbox.Anchored = false
+        currentHitbox.CanCollide = false
+        currentHitbox.Color = Color3.fromRGB(255, 255, 255)  -- กำหนดสีเป็นขาว (สามารถปรับเป็นสีอื่นได้)
+        currentHitbox.Transparency = 0.5  -- ตั้งค่า Transparency เพื่อให้สีจางลง (0 = ทึบ, 1 = โปร่งใส)
+        currentHitbox.Parent = character
         
-        -- เปลี่ยนสี hitbox ให้จางลง
-        hitbox.Color = Color3.fromRGB(255, 255, 255)  -- กำหนดสีเป็นขาว (สามารถปรับเป็นสีอื่นได้)
-        hitbox.Transparency = 0.5  -- ตั้งค่า Transparency เพื่อให้สีจางลง (0 = ทึบ, 1 = โปร่งใส)
-
         -- ใช้ Weld เพื่อให้ hitbox ติดกับตัวละคร
         local weld = Instance.new("WeldConstraint")
         weld.Part0 = humanoidRootPart
-        weld.Part1 = hitbox
-        weld.Parent = hitbox
+        weld.Part1 = currentHitbox
+        weld.Parent = currentHitbox
 
         print("Hitbox activated with size: " .. hitboxSize .. " studs")
     end,
 })
 
+-- สร้าง Button สำหรับซ่อน/แสดง hitbox
+local HideButton = Tab:CreateButton({
+    Name = "Toggle Hitbox Visibility",
+    Callback = function()
+        -- ซ่อน/แสดง hitbox
+        if currentHitbox then
+            isHitboxVisible = not isHitboxVisible  -- เปลี่ยนสถานะการแสดง/ซ่อน hitbox
+            currentHitbox.Transparency = isHitboxVisible and 0.5 or 1  -- ซ่อน hitbox หากไม่แสดง
+            currentHitbox.CanCollide = isHitboxVisible  -- หากไม่แสดงจะไม่ชนกับสิ่งอื่น
+            print(isHitboxVisible and "Hitbox is now visible" or "Hitbox is now hidden")
+        end
+    end,
+})
