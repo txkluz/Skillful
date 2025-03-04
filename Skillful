@@ -1,0 +1,94 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Window = Rayfield:CreateWindow({
+   Name = "Txkluz || FREE ",
+   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
+   LoadingTitle = "Skillful",
+   LoadingSubtitle = "by Txkluz ",
+   Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+
+   DisableRayfieldPrompts = true,
+   DisableBuildWarnings = true, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil, -- Create a custom folder for your hub/game
+      FileName = "Txkluz Hub"
+   },
+
+   Discord = {
+      Enabled = true, -- Prompt the user to join your Discord server if their executor supports it
+      Invite = "https://discord.gg/HSNbfRWj2X", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+   },
+
+   KeySystem = true, -- Set this to true to use our key system
+   KeySettings = {
+      Title = "Txkluz",
+      Subtitle = "Key System",
+      Note = "Join Discord For Key Lol https://discord.gg/HSNbfRWj2X", -- Use this to tell the user how to get a key
+      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+      Key = {"TxkluzKodLnw"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+   }
+})
+local Tab = Window:CreateTab("Main", 4483362458) -- Title, Image
+local Section = Tab:CreateSection("Main || Auto Farm")
+-- ตัวแปรที่จะเก็บขนาด Hitbox ที่ปรับผ่าน Slider
+local hitboxSize = 10  -- เริ่มต้นขนาดของ hitbox
+
+-- สร้าง Slider เพื่อปรับขนาด hitbox
+local Slider = Tab:CreateSlider({
+    Name = "Hitbox Size",
+    Range = {0, 50},  -- ตั้งค่าช่วงของขนาด hitbox
+    Increment = 1,    -- การเพิ่มขึ้นของขนาดที่ปรับได้
+    Suffix = "Studs", -- เพิ่มคำอธิบายหน่วยเป็น 'Studs'
+    CurrentValue = hitboxSize, -- ค่าเริ่มต้น
+    Flag = "HitboxSlider",  -- ใช้ Flag เพื่อใช้ในการตั้งค่า
+    Callback = function(Value)
+        -- อัพเดทค่าขนาด hitbox ตามค่าที่ได้จาก Slider
+        hitboxSize = Value
+        print("Hitbox Size set to: " .. hitboxSize .. " studs")
+    end,
+})
+
+-- สร้าง Button เพื่อเปิดใช้งาน Hitbox
+local Button = Tab:CreateButton({
+    Name = "Activate Hitbox",
+    Callback = function()
+        -- ฟังก์ชันนี้จะถูกเรียกเมื่อกดปุ่ม
+        -- เพิ่ม hitbox ขึ้นที่ตัวละครหรือส่วนอื่นๆ
+        local character = game.Players.LocalPlayer.Character
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        
+        -- ลบ hitbox เก่าออกหากมี
+        for _, part in ipairs(character:GetChildren()) do
+            if part.Name == "Hitbox" then
+                part:Destroy()
+            end
+        end
+
+        -- สร้าง hitbox ใหม่ (เปลี่ยนจาก Ball เป็น Block)
+        local hitbox = Instance.new("Part")
+        hitbox.Name = "Hitbox"
+        hitbox.Shape = Enum.PartType.Block  -- เปลี่ยนเป็นสี่เหลี่ยม
+        hitbox.Size = Vector3.new(hitboxSize, hitboxSize, hitboxSize)  -- ขนาดตามค่าที่ได้จาก Slider
+        hitbox.Position = humanoidRootPart.Position
+        hitbox.Anchored = false
+        hitbox.CanCollide = false
+        hitbox.Parent = character
+        
+        -- เปลี่ยนสี hitbox ให้จางลง
+        hitbox.Color = Color3.fromRGB(255, 255, 255)  -- กำหนดสีเป็นขาว (สามารถปรับเป็นสีอื่นได้)
+        hitbox.Transparency = 0.5  -- ตั้งค่า Transparency เพื่อให้สีจางลง (0 = ทึบ, 1 = โปร่งใส)
+
+        -- ใช้ Weld เพื่อให้ hitbox ติดกับตัวละคร
+        local weld = Instance.new("WeldConstraint")
+        weld.Part0 = humanoidRootPart
+        weld.Part1 = hitbox
+        weld.Parent = hitbox
+
+        print("Hitbox activated with size: " .. hitboxSize .. " studs")
+    end,
+})
+
